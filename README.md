@@ -1,549 +1,371 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sun Flower CRM Strategy & Data Lab</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
-        h1, h2, h3, .font-kanit { font-family: 'Kanit', sans-serif; }
-        .slide-content { height: 600px; display: none; }
-        .slide-content.active { display: flex; }
-        .sidebar-link.active { background-color: #003366; color: white; border-left: 4px solid #E67E22; }
-        .sunflower-orange { color: #E67E22; }
-        .sunflower-bg { background-color: #E67E22; }
-        .navy-bg { background-color: #003366; }
-        .navy-text { color: #003366; }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
+import React, { useState } from 'react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  Cell, PieChart, Pie
+} from 'recharts';
+import { 
+  Database, Presentation, ChevronRight, ChevronLeft, 
+  BarChart3, Users, Map, Target, TrendingDown, Info,
+  Smartphone, MapPin, Zap, ShoppingBag, AlertTriangle
+} from 'lucide-react';
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
+const App = () => {
+  const [view, setView] = useState('presentation'); // 'presentation' or 'data'
+  const [currentSlide, setCurrentSlide] = useState(1);
+  const totalSlides = 6;
 
-        /* Chart Bar Animations */
-        .bar-animate { transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1); }
-    </style>
-</head>
-<body class="h-screen overflow-hidden flex flex-col">
+  // --- Data Sections ---
+  const salesContributionData = [
+    { name: 'Hypermarket', '2015': 56, '2019': 44 },
+    { name: 'Supermarket', '2015': 19, '2019': 23 },
+    { name: 'Convenience', '2015': 24, '2019': 27 },
+    { name: 'Online', '2015': 1, '2019': 6 },
+  ];
 
-    <!-- ส่วนหัว / แถบนำทางด้านบน -->
-    <header class="navy-bg text-white p-4 flex justify-between items-center shadow-lg z-50">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 sunflower-bg rounded-full flex items-center justify-center">
-                <i class="fa-solid fa-sun text-white text-xl"></i>
-            </div>
-            <div>
-                <h1 class="text-xl font-bold leading-none uppercase">Sun Flower</h1>
-                <p class="text-xs sunflower-orange font-bold uppercase tracking-widest">Strategic CRM Unit</p>
-            </div>
+  const marketShareCentral = [
+    { name: 'Giant (เจ้าตลาด)', value: 51, color: '#94A3B8' },
+    { name: 'Sun Flower', value: 40, color: '#003366' },
+    { name: 'Orange (คู่แข่ง)', value: 9, color: '#E67E22' },
+  ];
+
+  const shopperIndexData = [
+    { segment: 'Family with Kids', SF: 120, Orange: 90 },
+    { segment: 'Young Adult (20-39)', SF: 77, Orange: 125 },
+    { segment: 'AB (High Income)', SF: 110, Orange: 92 },
+  ];
+
+  // --- Navigation Logic ---
+  const nextSlide = () => setCurrentSlide(prev => Math.min(prev + 1, totalSlides));
+  const prevSlide = () => setCurrentSlide(prev => Math.max(prev - 1, 1));
+
+  return (
+    <div className="flex flex-col h-screen bg-[#F8FAFC] text-slate-900 overflow-hidden Sarabun">
+      {/* Header Navigation */}
+      <header className="bg-[#003366] text-white px-8 py-3 flex justify-between items-center z-50 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#E67E22] rounded-full flex items-center justify-center shadow-md">
+            <BarChart3 size={20} />
+          </div>
+          <div>
+            <h1 className="font-bold text-lg leading-none uppercase tracking-tight Kanit">Sun Flower CRM Strategy</h1>
+            <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest Sarabun opacity-80">Board Confidential</p>
+          </div>
         </div>
-        <div class="flex gap-4">
-            <button onclick="switchView('data')" id="btn-view-data" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all flex items-center gap-2 border border-white/20">
-                <i class="fa-solid fa-database"></i> ข้อมูลดิบ (Raw Data)
-            </button>
-            <button onclick="switchView('presentation')" id="btn-view-presentation" class="px-4 py-2 rounded-lg sunflower-bg hover:bg-orange-600 transition-all flex items-center gap-2 shadow-lg">
-                <i class="fa-solid fa-display"></i> เริ่มนำเสนอ (Presentation)
-            </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setView('data')}
+            className={`px-4 py-1.5 text-xs font-bold rounded-lg border transition-all flex items-center gap-2 ${view === 'data' ? 'bg-white text-[#003366]' : 'bg-white/10 border-white/20 hover:bg-white/20'}`}
+          >
+            <Database size={14} /> ข้อมูลดิบ
+          </button>
+          <button 
+            onClick={() => setView('presentation')}
+            className={`px-5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-2 shadow-md ${view === 'presentation' ? 'bg-[#E67E22] text-white' : 'bg-white/10 border-white/20 hover:bg-white/20'}`}
+          >
+            <Presentation size={14} /> เริ่มนำเสนอ
+          </button>
         </div>
-    </header>
+      </header>
 
-    <main class="flex-grow flex overflow-hidden">
+      {/* Main Workspace */}
+      <main className="flex-grow relative overflow-hidden flex flex-col">
         
-        <!-- แถบเมนูด้านข้างสำหรับหน้าข้อมูลดิบ -->
-        <aside id="data-sidebar" class="w-64 bg-white border-r border-gray-200 overflow-y-auto hidden">
-            <div class="p-6">
-                <h3 class="font-kanit font-bold text-gray-500 uppercase text-xs tracking-wider mb-4">คลังข้อมูลดิบ</h3>
-                <nav class="space-y-1">
-                    <a href="#" onclick="showDataSection(event, 'stores')" id="link-stores" class="sidebar-link active block p-3 rounded-lg text-sm transition-all flex items-center gap-3">
-                        <i class="fa-solid fa-store"></i> สาขาและยอดขาย
-                    </a>
-                    <a href="#" onclick="showDataSection(event, 'metrics')" id="link-metrics" class="sidebar-link block p-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-3">
-                        <i class="fa-solid fa-chart-line"></i> ตัวชี้วัดประสิทธิภาพ
-                    </a>
-                    <a href="#" onclick="showDataSection(event, 'profiles')" id="link-profiles" class="sidebar-link block p-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-3">
-                        <i class="fa-solid fa-users"></i> โปรไฟล์ลูกค้า (Index)
-                    </a>
-                    <a href="#" onclick="showDataSection(event, 'market')" id="link-market" class="sidebar-link block p-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-3">
-                        <i class="fa-solid fa-pie-chart"></i> Market Share รายภาค
-                    </a>
-                </nav>
+        {/* VIEW: DATA DASHBOARD */}
+        {view === 'data' && (
+          <div className="flex h-full animate-in fade-in duration-500 overflow-hidden">
+            <aside className="w-64 bg-white border-r border-slate-200 p-6 flex flex-col gap-8 shadow-sm">
+                <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Master Database</p>
+                    <nav className="space-y-1">
+                        <button className="w-full text-left p-3 rounded-xl bg-slate-50 text-[#003366] font-bold text-xs flex items-center gap-3 border-l-4 border-[#E67E22]"><ShoppingBag size={14}/> Sales Performance</button>
+                        <button className="w-full text-left p-3 rounded-xl text-slate-500 font-medium text-xs flex items-center gap-3 hover:bg-slate-50 transition-colors"><Users size={14}/> Shopper Index</button>
+                        <button className="w-full text-left p-3 rounded-xl text-slate-500 font-medium text-xs flex items-center gap-3 hover:bg-slate-50 transition-colors"><Map size={14}/> Regional Share</button>
+                    </nav>
+                </div>
+            </aside>
+            <div className="flex-grow p-8 overflow-y-auto bg-[#F1F5F9]">
+                <div className="max-w-5xl mx-auto space-y-8">
+                    <h2 className="text-2xl font-bold text-[#003366] Kanit mb-6">Database Insight Explorer</h2>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 className="text-xs font-bold text-slate-400 mb-6 uppercase tracking-wider Sarabun">Store Contribution Trend (%)</h3>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart data={salesContributionData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                                    <XAxis dataKey="name" fontSize={11} axisLine={false} tickLine={false} />
+                                    <YAxis fontSize={11} axisLine={false} tickLine={false} />
+                                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+                                    <Bar dataKey="2015" fill="#CBD5E1" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="2019" fill="#003366" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center">
+                            <h3 className="text-xs font-bold text-slate-400 mb-8 uppercase tracking-wider Sarabun">Key Growth Indicators</h3>
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center p-4 bg-red-50 rounded-2xl border border-red-100">
+                                    <span className="text-sm font-bold text-red-800 Sarabun">Hypermarket Freq.</span>
+                                    <span className="text-xl font-bold text-red-600">8 / ปี</span>
+                                </div>
+                                <div className="flex justify-between items-center p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                                    <span className="text-sm font-bold text-blue-800 Sarabun">Online Basket Size</span>
+                                    <span className="text-xl font-bold text-blue-600">1,100 THB</span>
+                                </div>
+                                <div className="flex justify-between items-center p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                                    <span className="text-sm font-bold text-orange-800 Sarabun">Central Share Gap</span>
+                                    <span className="text-xl font-bold text-orange-600">-11% vs Giant</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </aside>
+          </div>
+        )}
 
-        <!-- พื้นที่แสดงเนื้อหาหลัก -->
-        <section id="content-container" class="flex-grow overflow-y-auto p-8 bg-gray-50">
-            
-            <!-- ส่วนข้อมูลดิบ (Raw Data) -->
-            <div id="data-content-wrapper" class="hidden animate-fade space-y-12">
+        {/* VIEW: PRESENTATION SLIDES */}
+        {view === 'presentation' && (
+          <div className="h-full flex flex-col p-6 items-center justify-center">
+            <div className="w-full max-w-6xl aspect-[16/9] bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden relative flex flex-col">
                 
-                <!-- 1. ข้อมูลสาขาและสัดส่วนยอดขาย -->
-                <div id="data-stores" class="data-section">
-                    <h2 class="text-3xl font-kanit font-bold navy-text mb-6">โครงสร้างสาขาและยอดขาย</h2>
-                    <div class="grid grid-cols-1 gap-8">
-                        <div class="bg-white rounded-xl shadow-sm border p-6">
-                            <h3 class="font-bold mb-4 navy-text">จำนวนสาขา (Number of Stores)</h3>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left text-sm">
-                                    <thead class="bg-gray-50 border-b">
+                {/* Slide Content Area */}
+                <div className="flex-grow p-10 flex flex-col relative overflow-hidden">
+                    
+                    {/* Slide 1: Welcome */}
+                    {currentSlide === 1 && (
+                      <div className="h-full flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-700">
+                        <div className="bg-[#E67E22] text-white px-5 py-1 rounded-full text-[10px] font-bold mb-8 tracking-[0.3em] uppercase shadow-md Sarabun">Strategic CRM Presentation</div>
+                        <h1 className="text-5xl lg:text-7xl font-bold text-[#003366] mb-8 leading-tight Kanit">กู้ชีพ Sun Flower:<br/><span className="text-[#E67E22]">CRM Strategy 2025</span></h1>
+                        <p className="text-lg text-slate-400 Sarabun max-w-2xl mx-auto leading-relaxed italic">"กอบกู้ยอดขาย Hypermarket ด้วยพลัง Synergy ข้ามขีดจำกัด"</p>
+                        <div className="mt-12 flex gap-12 border-t border-slate-100 pt-10">
+                            <div className="text-left border-l-4 border-[#E67E22] pl-4">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest Sarabun">Target Audience</p>
+                                <p className="text-sm font-bold text-[#003366] Kanit">CEO & Board Directors</p>
+                            </div>
+                            <div className="text-left border-l-4 border-[#003366] pl-4">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest Sarabun">Focus Area</p>
+                                <p className="text-sm font-bold text-[#003366] Kanit">Hypermarket Revival</p>
+                            </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Slide 2: Diagnosis - Performance (HR Step 1) */}
+                    {currentSlide === 2 && (
+                      <div className="h-full flex flex-col animate-in slide-in-from-right duration-500">
+                        <div className="flex justify-between items-end mb-8 border-b pb-4 border-slate-100">
+                            <h2 className="text-3xl font-bold text-[#003366] Kanit flex items-center gap-4"><TrendingDown className="text-red-500" size={32}/> 1. วินิจฉัย: เมื่อรายได้หลักกำลังหายไป</h2>
+                            <button onClick={() => setView('data')} className="text-xs font-bold text-blue-600 hover:underline transition-all flex items-center gap-1"><Info size={12}/> ข้อมูลสนับสนุน</button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-10 flex-grow">
+                            <div className="flex flex-col justify-center space-y-6">
+                                <div className="p-6 bg-red-50 rounded-2xl border border-red-100">
+                                    <h3 className="text-red-700 font-bold text-xl mb-1 Sarabun italic">Frequency Crisis</h3>
+                                    <p className="text-sm text-slate-600">ลูกค้ามาซื้อของลดลงจาก 12 ครั้ง เหลือ <span className="text-red-600 font-black text-2xl">8 ครั้ง / ปี</span></p>
+                                </div>
+                                <div className="p-6 bg-orange-50 rounded-2xl border border-orange-100">
+                                    <h3 className="text-orange-700 font-bold text-xl mb-1 Sarabun italic">The Churning Gap</h3>
+                                    <p className="text-sm text-slate-600 font-medium">ยอดขาย Hypermarket ติดลบ <span className="text-orange-600 font-black text-2xl">-3%</span> สวนทางกับตลาด</p>
+                                </div>
+                            </div>
+                            <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-50 flex flex-col justify-center">
+                                <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-8 text-center tracking-widest">Revenue Mix: Core Business is Shrinking</h4>
+                                <div className="space-y-10">
+                                    <div>
+                                        <div className="flex justify-between text-xs font-bold mb-2"><span>2015 Contribution</span><span className="text-slate-400">56%</span></div>
+                                        <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden"><div className="bg-[#003366] h-full" style={{width: '56%'}}></div></div>
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between text-xs font-bold mb-2"><span>2019 Contribution</span><span className="text-red-500 font-black text-sm">44%</span></div>
+                                        <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden"><div className="bg-red-500 h-full" style={{width: '44%'}}></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Slide 3: Market Analysis - Central (HR Step 2) */}
+                    {currentSlide === 3 && (
+                      <div className="h-full flex flex-col animate-in slide-in-from-right duration-500">
+                        <div className="flex justify-between items-end mb-8 border-b pb-4 border-slate-100">
+                            <h2 className="text-3xl font-bold text-[#003366] Kanit flex items-center gap-4"><Map className="text-orange-500" size={32}/> 2. ตลาด: วิกฤตการณ์พื้นที่ "ภาคกลาง"</h2>
+                            <p className="text-[10px] font-bold text-red-500 bg-red-50 px-3 py-1 rounded-full border border-red-100">Critical Threat</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-10 flex-grow">
+                            <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 flex flex-col items-center justify-center">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-8 tracking-widest">Market Share: Central Region (Hypermarket)</h4>
+                                <div className="flex items-end justify-center gap-8 h-48 w-full border-b-2 border-slate-100 px-4">
+                                    {marketShareCentral.map((item, i) => (
+                                        <div key={i} className="flex-1 flex flex-col items-center">
+                                            <div 
+                                                className="w-full rounded-t-xl transition-all duration-1000 flex items-center justify-center text-white text-[10px] font-bold" 
+                                                style={{ height: `${item.value * 1.8}%`, backgroundColor: item.color }}
+                                            >
+                                                {item.value}%
+                                            </div>
+                                            <p className="mt-4 text-[9px] font-bold text-slate-500 text-center uppercase Sarabun">{item.name}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="flex flex-col justify-center space-y-6">
+                                <div className="p-6 bg-[#003366] text-white rounded-3xl shadow-lg relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-bl-full group-hover:scale-125 transition-transform"></div>
+                                    <h3 className="text-xl font-bold mb-3 flex items-center gap-2"><AlertTriangle size={20} className="text-orange-400"/> The Giant Gap: 11%</h3>
+                                    <p className="text-sm opacity-80 leading-relaxed Sarabun">ในภาคกลางซึ่งเป็นหัวใจหลัก เราตามหลัง Giant ถึง 11% ขณะที่ Orange ไล่จี้ส่วนแบ่งทั่วประเทศเหลือเพียง 1%</p>
+                                </div>
+                                <div className="bg-white p-6 rounded-2xl border border-dashed border-slate-200">
+                                    <p className="text-xs text-slate-400 font-bold uppercase mb-2">Competitor Insight:</p>
+                                    <p className="text-sm text-slate-500 Sarabun">Orange ชนะใจกลุ่ม <strong>Young Adult</strong> (Index 125) ได้อย่างเบ็ดเสร็จด้วยภาพลักษณ์แบรนด์ที่ทันสมัยกว่า</p>
+                                </div>
+                            </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Slide 4: Shopper Insights (HR Step 3) */}
+                    {currentSlide === 4 && (
+                      <div className="h-full flex flex-col animate-in slide-in-from-right duration-500">
+                        <h2 className="text-3xl font-bold text-[#003366] mb-8 border-l-8 border-orange-500 pl-6 Kanit">3. ข้อมูลเชิงลึก: กลุ่มเป้าหมายที่ต้องกอบกู้</h2>
+                        <div className="grid grid-cols-2 gap-10 flex-grow items-center">
+                            <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-50">
+                                <h3 className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-10">Shopper Index (SF vs Total Market Average 100)</h3>
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <BarChart data={shopperIndexData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                                        <XAxis dataKey="segment" fontSize={9} interval={0} tickLine={false} axisLine={false} />
+                                        <YAxis domain={[0, 150]} fontSize={10} axisLine={false} />
+                                        <Tooltip cursor={{fill: '#F8FAFC'}} contentStyle={{borderRadius: '12px'}} />
+                                        <Bar dataKey="SF" fill="#003366" radius={[4, 4, 0, 0]} name="Sun Flower Index" />
+                                        <Bar dataKey="Orange" fill="#E67E22" radius={[4, 4, 0, 0]} name="Orange Index" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="space-y-6">
+                                <div className="p-6 bg-white border border-blue-100 rounded-3xl shadow-sm border-l-8 border-blue-500">
+                                    <h4 className="font-bold text-blue-800 text-lg flex items-center gap-2 mb-2 italic Sarabun"><Target size={22}/> Our Stronghold</h4>
+                                    <p className="text-sm text-slate-500 leading-relaxed Sarabun">เรายังแกร่งมากในกลุ่ม <strong>ครอบครัวที่มีบุตร</strong> (Index 120) และกลุ่มรายได้สูง (AB Index 110)</p>
+                                </div>
+                                <div className="p-6 bg-orange-50 rounded-3xl shadow-sm border-l-8 border-orange-500">
+                                    <h4 className="font-bold text-orange-800 text-lg flex items-center gap-2 mb-2 italic Sarabun"><Zap size={22}/> The Opportunity Gap</h4>
+                                    <p className="text-sm text-orange-900/70 leading-relaxed Sarabun">ต้องใช้ Tulip Synergy เพื่อเข้าถึงกลุ่ม <strong>Young Adult</strong> (Index 77) ซึ่งเป็นกลุ่มที่เรากำลัง "แพ้ราบคาบ" ให้กับคู่แข่ง</p>
+                                </div>
+                            </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Slide 5: CRM Strategy - Synergy (HR Step 4) */}
+                    {currentSlide === 5 && (
+                      <div className="h-full flex flex-col animate-in slide-in-from-right duration-500">
+                        <h2 className="text-3xl font-bold text-[#003366] mb-10 border-l-8 border-orange-500 pl-6 Kanit">4. กลยุทธ์ "Unfair Advantage" Synergy</h2>
+                        <div className="grid grid-cols-3 gap-8 flex-grow">
+                            {[
+                                { title: 'Location-Based', icon: <MapPin className="text-white" size={32}/>, color: 'bg-orange-500', desc: 'ส่ง SMS พิเศษเฉพาะกลุ่มผ่านเสาสัญญาณ Tulip เมื่อลูกค้าอยู่ใกล้รัศมี Hypermarket' },
+                                { title: 'Single Profile', icon: <Smartphone className="text-white" size={32}/>, color: 'bg-[#003366]', desc: 'ผสานพฤติกรรมการโทรและช้อปปิ้งเป็นโปรไฟล์เดียว เพื่อมอบ Personalized Offers ที่แม่นยำ' },
+                                { title: 'Digital Burn', icon: <Zap className="text-white" size={32}/>, color: 'bg-orange-500', desc: 'แลกพอยต์ Tulip เป็นส่วนลด Sun Flower ดึงคนรุ่นใหม่มาช้อปผ่านช่องทาง Online ของเรา' }
+                            ].map((card, i) => (
+                                <div key={i} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-lg hover:-translate-y-2 transition-all duration-300 text-center flex flex-col items-center group">
+                                    <div className={`w-16 h-16 ${card.color} rounded-2xl flex items-center justify-center mb-8 shadow-xl group-hover:rotate-12 transition-transform`}>
+                                        {card.icon}
+                                    </div>
+                                    <h4 className="font-bold text-xl text-[#003366] mb-4 Kanit uppercase tracking-tight">{card.title}</h4>
+                                    <p className="text-xs text-slate-500 Sarabun leading-relaxed opacity-80">{card.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Slide 6: Measurement (HR Step 5) */}
+                    {currentSlide === 6 && (
+                      <div className="h-full flex flex-col animate-in slide-in-from-right duration-500 overflow-y-auto">
+                        <h2 className="text-3xl font-bold text-[#003366] mb-8 border-l-8 border-orange-500 pl-6 Kanit">5. ตัวชี้วัดความสำเร็จ (Key KPIs)</h2>
+                        <div className="flex-grow flex flex-col justify-center py-4">
+                            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
+                                <table className="w-full text-left Sarabun">
+                                    <thead className="bg-[#003366] text-white">
                                         <tr>
-                                            <th class="p-3 font-kanit">Format</th>
-                                            <th class="p-3">2015</th>
-                                            <th class="p-3">2016</th>
-                                            <th class="p-3">2017</th>
-                                            <th class="p-3">2018</th>
-                                            <th class="p-3">2019</th>
+                                            <th className="p-6 text-sm font-bold uppercase tracking-widest">Key Metric</th>
+                                            <th className="p-6 text-sm font-bold uppercase tracking-widest text-center">Base (2019)</th>
+                                            <th className="p-6 text-sm font-bold uppercase tracking-widest text-center">Target (2025)</th>
+                                            <th className="p-6 text-sm font-bold uppercase tracking-widest">Core Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y">
-                                        <tr><td class="p-3 font-bold">Hypermarket</td><td>195</td><td>200</td><td>207</td><td>213</td><td>220</td></tr>
-                                        <tr><td class="p-3 font-bold">Supermarket</td><td>97</td><td>102</td><td>106</td><td>110</td><td>112</td></tr>
-                                        <tr><td class="p-3 font-bold">Convenience Store</td><td>450</td><td>460</td><td>470</td><td>485</td><td>500</td></tr>
+                                    <tbody className="divide-y text-sm">
+                                        <tr>
+                                            <td className="p-6 font-bold text-slate-700">Visit Frequency</td>
+                                            <td className="p-6 text-center text-red-500 font-bold italic">8 / ปี</td>
+                                            <td className="p-6 text-center text-green-600 font-black text-lg underline">11 / ปี</td>
+                                            <td className="p-6 text-slate-500 font-medium">Geo-Fencing Notifications</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-6 font-bold text-slate-700">High Loyalty %</td>
+                                            <td className="p-6 text-center font-bold italic">26%</td>
+                                            <td className="p-6 text-center text-green-600 font-black text-lg underline">32%</td>
+                                            <td className="p-6 text-slate-500 font-medium">Personalized Retention App</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-6 font-bold text-slate-700">Online Contribution</td>
+                                            <td className="p-6 text-center font-bold italic">6%</td>
+                                            <td className="p-6 text-center text-green-600 font-black text-lg underline">15%</td>
+                                            <td className="p-6 text-slate-500 font-medium">Tulip Look-alike Acquisition</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
-
-                        <div class="bg-white rounded-xl shadow-sm border p-6">
-                            <h3 class="font-bold mb-4 navy-text">สัดส่วนยอดขาย (Sales Contributions %)</h3>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left text-sm">
-                                    <thead class="bg-gray-50 border-b">
-                                        <tr>
-                                            <th class="p-3 font-kanit">Format</th>
-                                            <th class="p-3">2015</th>
-                                            <th class="p-3">2016</th>
-                                            <th class="p-3">2017</th>
-                                            <th class="p-3">2018</th>
-                                            <th class="p-3">2019</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y">
-                                        <tr class="bg-red-50"><td class="p-3 font-bold text-red-600">Hypermarket</td><td>56%</td><td>53%</td><td>50%</td><td>48%</td><td class="font-bold">44%</td></tr>
-                                        <tr><td class="p-3 font-bold">Supermarket</td><td>19%</td><td>20%</td><td>21%</td><td>22%</td><td>23%</td></tr>
-                                        <tr><td class="p-3 font-bold">Convenience Store</td><td>24%</td><td>25%</td><td>26%</td><td>26%</td><td>27%</td></tr>
-                                        <tr class="bg-green-50"><td class="p-3 font-bold text-green-600">Online</td><td>1%</td><td>2%</td><td>3%</td><td>4%</td><td class="font-bold">6%</td></tr>
-                                    </tbody>
-                                </table>
+                            <div className="mt-8 p-6 bg-slate-900 text-white rounded-3xl shadow-xl flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-white/10 rounded-xl"><BarChart3 className="text-orange-400" size={28}/></div>
+                                    <p className="text-lg font-bold Kanit italic">"พลิกข้อมูลเครือข่าย 25 ล้านราย ให้เป็นกำไรที่ยั่งยืนผ่าน ROI +18%"</p>
+                                </div>
+                                <div className="bg-orange-500 px-6 py-2 rounded-full font-black text-sm uppercase shadow-lg Sarabun tracking-tighter">Approved Plan</div>
                             </div>
                         </div>
-                    </div>
+                      </div>
+                    )}
                 </div>
 
-                <!-- 2. ตัวชี้วัดประสิทธิภาพ (Metrics) -->
-                <div id="data-metrics" class="data-section hidden">
-                    <h2 class="text-3xl font-kanit font-bold navy-text mb-6">ประสิทธิภาพและการเจริญเติบโต</h2>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Frequency Table -->
-                        <div class="bg-white rounded-xl shadow-sm border p-6">
-                            <h3 class="font-bold mb-4 navy-text">ความถี่ในการซื้อ (Frequency per year)</h3>
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-gray-50 border-b">
-                                    <tr>
-                                        <th class="p-3 font-kanit">Format</th>
-                                        <th class="p-3">2015</th>
-                                        <th class="p-3">2016</th>
-                                        <th class="p-3">2017</th>
-                                        <th class="p-3">2018</th>
-                                        <th class="p-3">2019</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    <tr class="bg-red-50"><td class="p-3 font-bold">Hypermarket</td><td>12</td><td>11</td><td>10</td><td>9</td><td class="font-bold text-red-600">8</td></tr>
-                                    <tr><td class="p-3 font-bold">Supermarket</td><td>20</td><td>22</td><td>24</td><td>26</td><td>28</td></tr>
-                                    <tr><td class="p-3 font-bold">Convenience</td><td>48</td><td>49</td><td>50</td><td>51</td><td>51</td></tr>
-                                    <tr><td class="p-3 font-bold">Online</td><td>3</td><td>4</td><td>5</td><td>8</td><td>10</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <!-- Basket Size -->
-                        <div class="bg-white rounded-xl shadow-sm border p-6">
-                            <h3 class="font-bold mb-4 navy-text">ขนาดตะกร้าเฉลี่ย (Average Basket - THB)</h3>
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-gray-50 border-b">
-                                    <tr>
-                                        <th class="p-3 font-kanit">Format</th>
-                                        <th class="p-3">2015</th>
-                                        <th class="p-3">2019</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    <tr><td class="p-3 font-bold">Hypermarket</td><td>650</td><td>725</td></tr>
-                                    <tr><td class="p-3 font-bold">Supermarket</td><td>350</td><td>375</td></tr>
-                                    <tr><td class="p-3 font-bold">Convenience</td><td>100</td><td>130</td></tr>
-                                    <tr class="bg-blue-50"><td class="p-3 font-bold text-blue-700">Online</td><td>950</td><td class="font-bold">1,100</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                {/* Fixed Navigation Footer */}
+                <footer className="bg-white border-t border-slate-100 px-12 py-6 flex justify-between items-center z-50">
+                    <div className="flex items-center gap-4">
+                        <span className="bg-slate-100 px-4 py-1.5 rounded-full text-[10px] font-bold text-[#003366] Sarabun tracking-widest">SLIDE {currentSlide} OF {totalSlides}</span>
                     </div>
-                </div>
-
-                <!-- 3. โปรไฟล์ลูกค้า (Profiles) -->
-                <div id="data-profiles" class="data-section hidden">
-                    <h2 class="text-3xl font-kanit font-bold navy-text mb-6">ดัชนีโปรไฟล์ลูกค้า (Shopper Index)</h2>
-                    <div class="bg-white rounded-xl shadow-sm border p-6">
-                        <h3 class="font-bold mb-4 navy-text">Index เทียบกับค่าเฉลี่ยประเทศ (100 = Average)</h3>
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-gray-50 border-b">
-                                <tr>
-                                    <th class="p-3 font-kanit">Segment / Brand</th>
-                                    <th class="p-3 text-center">Sun Flower</th>
-                                    <th class="p-3 text-center">Giant (Comp)</th>
-                                    <th class="p-3 text-center">Orange (Comp)</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y text-center">
-                                <tr><td class="p-3 font-bold text-left">กลุ่ม AB (รายได้สูง)</td><td>110</td><td>115</td><td class="text-red-500 font-bold">92</td></tr>
-                                <tr><td class="p-3 font-bold text-left">กลุ่ม C (รายได้กลาง)</td><td>100</td><td>104</td><td>97</td></tr>
-                                <tr><td class="p-3 font-bold text-left">กลุ่ม DE (รายได้น้อย)</td><td>90</td><td>81</td><td>111</td></tr>
-                                <tr class="bg-blue-50"><td class="p-3 font-bold text-left">Family with children</td><td class="font-bold text-blue-700">120</td><td>85</td><td>90</td></tr>
-                                <tr><td class="p-3 font-bold text-left">Young Adult (20-39)</td><td>77</td><td>90</td><td class="text-green-600 font-bold">125</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- 4. ข้อมูล Market Share รายภูมิภาค -->
-                <div id="data-market" class="data-section hidden">
-                    <h2 class="text-3xl font-kanit font-bold navy-text mb-6">ส่วนแบ่งการตลาด (Market Share Trends)</h2>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="bg-white rounded-xl shadow-sm border p-6">
-                            <h3 class="font-bold mb-4 navy-text">Hypermarket Nationwide Share</h3>
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-gray-50 border-b">
-                                    <tr><th>Brand</th><th>2015</th><th>2017</th><th>2019</th></tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    <tr class="bg-red-50"><td class="p-3 font-bold">Sun Flower</td><td>44%</td><td>45%</td><td class="font-bold text-red-600">41%</td></tr>
-                                    <tr><td class="p-3 font-bold">Giant</td><td>21%</td><td>18%</td><td>19%</td></tr>
-                                    <tr class="bg-green-50"><td class="p-3 font-bold text-green-700">Orange</td><td>35%</td><td>37%</td><td class="font-bold text-green-700">40%</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-sm border p-6">
-                            <h3 class="font-bold mb-4 navy-text">Central Region Share (Hypermarket)</h3>
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-gray-50 border-b">
-                                    <tr><th>Brand</th><th>2015</th><th>2017</th><th>2019</th></tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    <tr class="bg-red-100"><td class="p-3 font-bold">Sun Flower</td><td>52%</td><td>47%</td><td class="font-bold text-red-700">40%</td></tr>
-                                    <tr><td class="p-3 font-bold">Giant</td><td>47%</td><td>49%</td><td>51%</td></tr>
-                                    <tr><td class="p-3 font-bold">Orange</td><td>1%</td><td>4%</td><td>9%</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ส่วนการนำเสนอ (Presentation) -->
-            <div id="presentation-content-wrapper" class="h-full flex flex-col items-center justify-center animate-fade">
-                <div class="w-full max-w-5xl bg-white aspect-[16/9] shadow-2xl rounded-2xl overflow-hidden relative flex flex-col border border-gray-200">
-                    
-                    <!-- Progress Bar -->
-                    <div class="w-full h-1 bg-gray-100">
-                        <div id="progress-bar" class="h-full sunflower-bg transition-all duration-300" style="width: 0%"></div>
-                    </div>
-
-                    <!-- Slides เนื้อหา -->
-                    <!-- สไลด์ 1: หน้าแรก -->
-                    <div id="slide-1" class="slide-content active flex-col p-12 justify-center items-center text-center">
-                        <div class="sunflower-bg text-white px-4 py-1 rounded-full text-xs font-bold mb-6 tracking-widest uppercase">Strategic CRM Roadmap</div>
-                        <h1 class="text-6xl font-kanit font-bold navy-text mb-6">Sun Flower:<br>กลยุทธ์กู้คืนยอดขาย Hypermarket</h1>
-                        <p class="text-xl text-gray-500 max-w-2xl Sarabun">การวิเคราะห์พฤติกรรมลูกค้าเชิงลึก และการใช้พลังข้อมูลร่วมกับเครือข่าย Tulip</p>
-                        <div class="mt-12 flex gap-12">
-                            <div class="text-left border-l-4 border-orange-500 pl-4">
-                                <p class="text-[10px] uppercase font-bold text-gray-400 Sarabun">Prepared By</p>
-                                <p class="font-kanit font-bold text-sm">CRM Strategy Manager</p>
-                            </div>
-                            <div class="text-left border-l-4 border-blue-900 pl-4">
-                                <p class="text-[10px] uppercase font-bold text-gray-400 Sarabun">Audience</p>
-                                <p class="font-kanit font-bold text-sm">CEO & Board Members</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- สไลด์ 2: สถานการณ์วิกฤต -->
-                    <div id="slide-2" class="slide-content flex-col p-12">
-                        <div class="flex justify-between items-end mb-8 border-b-2 border-orange-500 pb-2">
-                            <h2 class="text-3xl font-kanit font-bold navy-text">1. วิกฤตการณ์: ความถี่การซื้อที่หายไป</h2>
-                            <button onclick="goToData('metrics')" class="text-xs text-blue-600 hover:underline font-bold"><i class="fa-solid fa-database mr-1"></i> ดูข้อมูลดิบ</button>
-                        </div>
-                        <div class="grid grid-cols-2 gap-8 h-full">
-                            <div class="space-y-6">
-                                <p class="text-sm text-gray-600">พฤติกรรมลูกค้า Hypermarket เปลี่ยนแปลงอย่างชัดเจน:</p>
-                                <div class="bg-red-50 p-6 rounded-xl border-l-4 border-red-500">
-                                    <h3 class="font-bold text-red-700 text-lg mb-2">Shopping Frequency Drop</h3>
-                                    <p class="text-sm">จากมาซื้อของ 12 ครั้ง/ปี ในปี 2015 ลดลงเหลือเพียง <span class="text-xl font-bold">8 ครั้ง/ปี</span> ในปี 2019</p>
-                                </div>
-                                <div class="bg-gray-50 p-6 rounded-xl border-l-4 border-gray-400">
-                                    <h3 class="font-bold text-gray-700 text-lg mb-2">Contribution Shift</h3>
-                                    <p class="text-sm">สัดส่วนยอดขาย Hypermarket ลดลงจาก 56% เหลือ 44% ภายใน 4 ปี</p>
-                                </div>
-                            </div>
-                            <div class="flex flex-col items-center justify-center">
-                                <div class="w-full max-w-xs space-y-4">
-                                    <p class="text-center font-bold text-xs uppercase text-gray-400 mb-2">สัดส่วนรายได้ที่หายไป (Hypermarket)</p>
-                                    <div class="relative pt-1">
-                                        <div class="flex mb-2 items-center justify-between">
-                                            <div class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">2015: 56%</div>
-                                        </div>
-                                        <div class="overflow-hidden h-4 mb-4 text-xs flex rounded bg-blue-100">
-                                            <div id="bar-2015" style="width:0%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-900 bar-animate"></div>
-                                        </div>
-                                        <div class="flex mb-2 items-center justify-between">
-                                            <div class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-600 bg-red-200">2019: 44%</div>
-                                        </div>
-                                        <div class="overflow-hidden h-4 mb-4 text-xs flex rounded bg-red-100">
-                                            <div id="bar-2019" style="width:0%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-600 bar-animate"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- สไลด์ 3: คู่แข่งและการเติบโตของ Orange -->
-                    <div id="slide-3" class="slide-content flex-col p-12">
-                        <div class="flex justify-between items-end mb-8 border-b-2 border-orange-500 pb-2">
-                            <h2 class="text-3xl font-kanit font-bold navy-text">2. คู่แข่ง: การคุกคามของ 'Orange'</h2>
-                            <button onclick="goToData('market')" class="text-xs text-blue-600 hover:underline font-bold"><i class="fa-solid fa-database mr-1"></i> ดูข้อมูลดิบ</button>
-                        </div>
-                        <div class="grid grid-cols-2 gap-12">
-                            <div class="space-y-4">
-                                <p class="text-sm font-bold text-gray-700">Nationwide Market Share Gap (Hypermarket):</p>
-                                <div class="flex items-end gap-4 h-48 pt-8">
-                                    <div class="flex-1 flex flex-col items-center">
-                                        <div class="bg-blue-900 w-full rounded-t-lg transition-all duration-1000" id="chart-sf-share" style="height:0%"></div>
-                                        <p class="text-[10px] mt-2 font-bold uppercase">SF (41%)</p>
-                                    </div>
-                                    <div class="flex-1 flex flex-col items-center">
-                                        <div class="bg-orange-500 w-full rounded-t-lg transition-all duration-1000" id="chart-orange-share" style="height:0%"></div>
-                                        <p class="text-[10px] mt-2 font-bold uppercase">Orange (40%)</p>
-                                    </div>
-                                    <div class="flex-1 flex flex-col items-center">
-                                        <div class="bg-gray-400 w-full rounded-t-lg transition-all duration-1000" id="chart-giant-share" style="height:0%"></div>
-                                        <p class="text-[10px] mt-2 font-bold uppercase">Giant (19%)</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                                <h3 class="font-bold text-gray-700 mb-4"><i class="fa-solid fa-triangle-exclamation text-orange-500 mr-2"></i> ข้อสังเกตสำคัญ:</h3>
-                                <ul class="text-sm space-y-3">
-                                    <li class="flex gap-2">
-                                        <span class="text-orange-500 font-bold">•</span>
-                                        <span>ห่างกันเพียง 1% เท่านั้น ทั่วประเทศ</span>
-                                    </li>
-                                    <li class="flex gap-2">
-                                        <span class="text-orange-500 font-bold">•</span>
-                                        <span>ในภูมิภาค Central เราเสียส่วนแบ่งตลาดอย่างหนัก จาก 52% เหลือ 40% ขณะที่ Giant เติบโตขึ้น</span>
-                                    </li>
-                                    <li class="flex gap-2">
-                                        <span class="text-orange-500 font-bold">•</span>
-                                        <span>Orange ครองใจกลุ่ม <strong>Young Adult (Index 125)</strong> อย่างเหนียวแน่น</span>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- สไลด์ 4: กลยุทธ์ผสาน Tulip -->
-                    <div id="slide-4" class="slide-content flex-col p-12">
-                        <div class="flex justify-between items-end mb-8 border-b-2 border-orange-500 pb-2">
-                            <h2 class="text-3xl font-kanit font-bold navy-text">3. ทางรอด: Tulip Synergy Strategy</h2>
-                            <button onclick="switchView('data')" class="text-xs text-blue-600 hover:underline font-bold"><i class="fa-solid fa-database mr-1"></i> ดูคลังข้อมูล</button>
-                        </div>
-                        <div class="grid grid-cols-3 gap-6 mt-4">
-                            <div class="bg-white p-6 rounded-xl border border-blue-100 shadow-sm text-center">
-                                <div class="w-12 h-12 sunflower-bg rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <i class="fa-solid fa-location-dot text-white text-xl"></i>
-                                </div>
-                                <h4 class="font-bold mb-2">Location-Based</h4>
-                                <p class="text-[10px] text-gray-500">ใช้เสาสัญญาณ Tulip ส่ง SMS เฉพาะจุดเมื่อลูกค้า Tulip (25M คน) อยู่ใกล้ Sun Flower</p>
-                            </div>
-                            <div class="bg-white p-6 rounded-xl border border-blue-100 shadow-sm text-center">
-                                <div class="w-12 h-12 sunflower-bg rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <i class="fa-solid fa-users-viewfinder text-white text-xl"></i>
-                                </div>
-                                <h4 class="font-bold mb-2">Look-alike Segment</h4>
-                                <p class="text-[10px] text-gray-500">ดึงลูกค้าพรีเมียมจาก Tulip ที่ยังไม่ช้อปกับเราผ่านข้อเสนอพิเศษ Cross-Category</p>
-                            </div>
-                            <div class="bg-white p-6 rounded-xl border border-blue-100 shadow-sm text-center">
-                                <div class="w-12 h-12 sunflower-bg rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <i class="fa-solid fa-mobile-screen-button text-white text-xl"></i>
-                                </div>
-                                <h4 class="font-bold mb-2">App Integration</h4>
-                                <p class="text-[10px] text-gray-500">สะสมและใช้คะแนนข้ามเครือข่าย เพื่อเพิ่ม Engagement ในแอป Sun Flower Card</p>
-                            </div>
-                        </div>
-                        <div class="mt-8 p-4 bg-blue-900 text-white rounded-lg flex items-center justify-between">
-                            <div class="text-sm">
-                                <span class="font-bold text-orange-400">Next Action:</span> มุ่งเป้าดึงกลุ่ม Young Family (Index 120) กลับมาซื้ออาหารสด (Fresh Food)
-                            </div>
-                            <i class="fa-solid fa-arrow-right-long animate-bounce-x"></i>
-                        </div>
-                    </div>
-
-                    <!-- แถบนำทางสไลด์ -->
-                    <div class="absolute bottom-6 right-6 flex gap-3">
-                        <button onclick="changeSlide(-1)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-all shadow-sm">
-                            <i class="fa-solid fa-chevron-left text-gray-400"></i>
+                    <div className="flex gap-4">
+                        <button 
+                            onClick={prevSlide}
+                            disabled={currentSlide === 1}
+                            className={`px-6 py-2.5 rounded-xl border font-bold flex items-center gap-2 transition-all text-xs ${currentSlide === 1 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-slate-50 text-slate-500 border-slate-200'}`}
+                        >
+                            <ChevronLeft size={16}/> ย้อนกลับ
                         </button>
-                        <button onclick="changeSlide(1)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-all shadow-sm">
-                            <i class="fa-solid fa-chevron-right navy-text"></i>
+                        <button 
+                            onClick={nextSlide}
+                            className={`px-8 py-2.5 rounded-xl text-white font-bold transition-all flex items-center gap-2 shadow-lg text-xs ${currentSlide === totalSlides ? 'bg-green-600 hover:bg-green-700' : 'bg-[#003366] hover:bg-slate-800'}`}
+                        >
+                            {currentSlide === totalSlides ? 'สิ้นสุดพรีเซนต์' : 'หน้าถัดไป'} <ChevronRight size={16}/>
                         </button>
                     </div>
-                    
-                    <div class="absolute bottom-6 left-6 text-[10px] text-gray-400 flex items-center gap-2 font-bold Sarabun">
-                        <span id="slide-indicator">สไลด์ 1 จาก 4</span>
-                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
-                        <span class="uppercase">Confidential: Board Strategy</span>
-                    </div>
-                </div>
+                </footer>
             </div>
+          </div>
+        )}
+      </main>
 
-        </section>
-    </main>
+      {/* Persistent App Progress Status Bar */}
+      <footer className="bg-white border-t border-slate-200 px-8 py-2 flex justify-between items-center text-[9px] text-slate-400 font-bold uppercase tracking-widest Sarabun z-50">
+          <div className="flex gap-6 items-center">
+              <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> Analytics Synced</span>
+              <span className="flex items-center gap-1.5"><Smartphone size={10}/> Data Lake: Tulip connectivity active</span>
+          </div>
+          <div className="flex gap-6 items-center">
+              <span className="text-orange-500">Market Share Focus: 41% → 45%</span>
+              <span className="text-[#003366]">CRM ID: SF-TULIP-2025</span>
+          </div>
+      </footer>
+    </div>
+  );
+};
 
-    <!-- แถบแสดงสถานะด้านล่าง -->
-    <footer class="bg-white border-t border-gray-200 px-6 py-2 flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase tracking-widest Sarabun">
-        <div class="flex gap-6">
-            <span class="flex items-center gap-1"><i class="fa-solid fa-circle text-[6px] text-green-500"></i> Data Analysis Connected</span>
-            <span class="flex items-center gap-1"><i class="fa-solid fa-lock"></i> Restricted Internal Use</span>
-        </div>
-        <div class="flex gap-4">
-            <span>Market Share: 41%</span>
-            <span>Frequency: 8/Yr</span>
-        </div>
-    </footer>
-
-    <script>
-        // การจัดการสถานะ
-        let currentView = 'data'; 
-        let currentSlideIndex = 1;
-        const totalSlides = 4;
-
-        // ฟังก์ชันสลับมุมมองระหว่างข้อมูลและพรีเซนต์
-        function switchView(view) {
-            currentView = view;
-            const dataSidebar = document.getElementById('data-sidebar');
-            const dataContent = document.getElementById('data-content-wrapper');
-            const presentationContent = document.getElementById('presentation-content-wrapper');
-            
-            const btnData = document.getElementById('btn-view-data');
-            const btnPres = document.getElementById('btn-view-presentation');
-
-            if (view === 'data') {
-                dataSidebar.classList.remove('hidden');
-                dataContent.classList.remove('hidden');
-                presentationContent.classList.add('hidden');
-                
-                btnData.classList.add('bg-white/30');
-                btnPres.classList.remove('bg-orange-600');
-                btnPres.classList.add('sunflower-bg');
-            } else {
-                dataSidebar.classList.add('hidden');
-                dataContent.classList.add('hidden');
-                presentationContent.classList.remove('hidden');
-                
-                btnData.classList.remove('bg-white/30');
-                btnPres.classList.add('bg-orange-600');
-                
-                // เริ่มอนิเมชั่นกราฟในสไลด์ถ้าเปลี่ยนมาหน้าพรีเซนต์
-                triggerSlideAnimations();
-            }
-        }
-
-        // ฟังก์ชันนำทางใน Sidebar หน้าข้อมูลดิบ
-        function showDataSection(event, sectionId) {
-            if (event) event.preventDefault();
-
-            const links = document.querySelectorAll('.sidebar-link');
-            links.forEach(link => {
-                link.classList.remove('active', 'bg-blue-900', 'text-white');
-                link.classList.add('text-gray-600');
-            });
-            
-            if (event && event.currentTarget) {
-                event.currentTarget.classList.add('active');
-            }
-
-            const sections = document.querySelectorAll('.data-section');
-            sections.forEach(sec => sec.classList.add('hidden'));
-            
-            const targetSection = document.getElementById(`data-${sectionId}`);
-            if (targetSection) {
-                targetSection.classList.remove('hidden');
-            }
-        }
-
-        // ฟังก์ชันลิงก์จากสไลด์พรีเซนต์ไปหาหน้าข้อมูลดิบเฉพาะส่วน
-        function goToData(sectionId) {
-            switchView('data');
-            const link = document.getElementById(`link-${sectionId}`);
-            if (link) {
-                link.click();
-            }
-        }
-
-        // การนำทางสไลด์
-        function changeSlide(direction) {
-            const nextSlide = currentSlideIndex + direction;
-            if (nextSlide >= 1 && nextSlide <= totalSlides) {
-                document.getElementById(`slide-${currentSlideIndex}`).classList.remove('active');
-                currentSlideIndex = nextSlide;
-                document.getElementById(`slide-${currentSlideIndex}`).classList.add('active', 'flex');
-                updateSlideUI();
-                triggerSlideAnimations();
-            }
-        }
-
-        function updateSlideUI() {
-            document.getElementById('slide-indicator').innerText = `สไลด์ ${currentSlideIndex} จาก ${totalSlides}`;
-            const progress = ((currentSlideIndex - 1) / (totalSlides - 1)) * 100;
-            document.getElementById('progress-bar').style.width = `${progress}%`;
-        }
-
-        // อนิเมชั่นกราฟในสไลด์
-        function triggerSlideAnimations() {
-            if (currentSlideIndex === 2) {
-                setTimeout(() => {
-                    document.getElementById('bar-2015').style.width = '56%';
-                    document.getElementById('bar-2019').style.width = '44%';
-                }, 100);
-            } else if (currentSlideIndex === 3) {
-                setTimeout(() => {
-                    document.getElementById('chart-sf-share').style.height = '82%'; // Scaling based on 41
-                    document.getElementById('chart-orange-share').style.height = '80%'; // Scaling based on 40
-                    document.getElementById('chart-giant-share').style.height = '38%'; // Scaling based on 19
-                }, 100);
-            }
-        }
-
-        window.onload = () => {
-            switchView('data');
-            updateSlideUI();
-        };
-
-        // การควบคุมด้วยคีย์บอร์ด
-        document.addEventListener('keydown', (e) => {
-            if (currentView === 'presentation') {
-                if (e.key === 'ArrowRight') changeSlide(1);
-                if (e.key === 'ArrowLeft') changeSlide(-1);
-            }
-        });
-    </script>
-</body>
-</html>
+export default App;
